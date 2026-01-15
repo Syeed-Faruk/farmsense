@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +28,71 @@ Guidelines for your responses:
 
 Remember: You are advisory, not prescriptive. Farmers make the final decisions.`;
 
+// Input validation constants
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_LENGTH = 4000;
+const VALID_ROLES = ["user", "assistant"];
+
+interface ChatMessage {
+  role: string;
+  content: string;
+}
+
+function validateMessages(messages: unknown): { valid: boolean; error?: string; messages?: ChatMessage[] } {
+  // Check if messages exists and is an array
+  if (!messages || !Array.isArray(messages)) {
+    return { valid: false, error: "Messages must be an array" };
+  }
+
+  // Check message count
+  if (messages.length === 0) {
+    return { valid: false, error: "At least one message is required" };
+  }
+
+  if (messages.length > MAX_MESSAGES) {
+    return { valid: false, error: `Maximum ${MAX_MESSAGES} messages allowed` };
+  }
+
+  // Validate each message
+  const validatedMessages: ChatMessage[] = [];
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    
+    if (!msg || typeof msg !== "object") {
+      return { valid: false, error: `Message ${i + 1} is invalid` };
+    }
+
+    const { role, content } = msg as { role?: unknown; content?: unknown };
+
+    // Validate role
+    if (!role || typeof role !== "string" || !VALID_ROLES.includes(role)) {
+      return { valid: false, error: `Message ${i + 1} has invalid role` };
+    }
+
+    // Validate content
+    if (!content || typeof content !== "string") {
+      return { valid: false, error: `Message ${i + 1} has invalid content` };
+    }
+
+    // Check content length
+    if (content.length === 0) {
+      return { valid: false, error: `Message ${i + 1} content cannot be empty` };
+    }
+
+    if (content.length > MAX_MESSAGE_LENGTH) {
+      return { valid: false, error: `Message ${i + 1} exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters` };
+    }
+
+    // Sanitize content - trim whitespace
+    validatedMessages.push({
+      role: role,
+      content: content.trim()
+    });
+  }
+
+  return { valid: true, messages: validatedMessages };
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -34,11 +100,76 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    // Require authorization header with valid API key
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify the request is from an authenticated user or valid client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify the JWT token by attempting to get the user
+    // This validates that the token is a valid Supabase token (either anon or authenticated)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    // For this public chatbot, we accept both authenticated users and valid anon tokens
+    // The key validation is that the token must be a valid Supabase JWT
+    // If there's an auth error that's not "no user", the token is invalid
+    if (authError && authError.message !== "Auth session missing!") {
+      return new Response(
+        JSON.stringify({ error: "Invalid authorization token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse and validate request body
+    let requestBody: unknown;
+    try {
+      requestBody = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON in request body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { messages: rawMessages } = requestBody as { messages?: unknown };
+    
+    // Validate messages
+    const validation = validateMessages(rawMessages);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const messages = validation.messages!;
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      console.error("LOVABLE_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "AI service configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -71,8 +202,7 @@ serve(async (req) => {
         );
       }
       
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error:", response.status);
       return new Response(
         JSON.stringify({ error: "Failed to get AI response. Please try again." }), 
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -87,7 +217,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Chat function error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error occurred" }), 
+      JSON.stringify({ error: "An unexpected error occurred. Please try again." }), 
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
