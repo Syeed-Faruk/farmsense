@@ -113,12 +113,31 @@ serve(async (req) => {
     // User is now authenticated - proceed with weather fetch
     const { latitude, longitude, locationName } = await req.json();
 
-    if (!latitude || !longitude) {
+    // Validate latitude and longitude types and ranges
+    if (typeof latitude !== 'number' || isNaN(latitude) || latitude < -90 || latitude > 90) {
       return new Response(
-        JSON.stringify({ error: "Latitude and longitude are required" }),
+        JSON.stringify({ error: "Invalid latitude. Must be a number between -90 and 90" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    if (typeof longitude !== 'number' || isNaN(longitude) || longitude < -180 || longitude > 180) {
+      return new Response(
+        JSON.stringify({ error: "Invalid longitude. Must be a number between -180 and 180" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate optional locationName if provided
+    if (locationName !== undefined && typeof locationName !== 'string') {
+      return new Response(
+        JSON.stringify({ error: "Invalid locationName. Must be a string" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Sanitize locationName to prevent issues in response
+    const sanitizedLocationName = locationName ? String(locationName).slice(0, 200) : "";
 
     // Fetch weather from Open-Meteo API (free, no API key needed)
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&timezone=auto`;
@@ -143,7 +162,7 @@ serve(async (req) => {
       windSpeed: Math.round(current.wind_speed_10m),
       weatherCode: current.weather_code,
       condition: getWeatherCondition(current.weather_code),
-      location: locationName || `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`,
+      location: sanitizedLocationName || `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`,
       recommendations: getRecommendations(
         current.temperature_2m,
         current.relative_humidity_2m,
