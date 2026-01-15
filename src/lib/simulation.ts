@@ -32,6 +32,22 @@ const cropCompatibility: Record<string, {
   cotton: { idealSoil: ["Loamy", "Clay"], idealWater: ["Medium"], sensitivity: 0.5 },
   sugarcane: { idealSoil: ["Loamy"], idealWater: ["High"], sensitivity: 0.7 },
   soybean: { idealSoil: ["Loamy"], idealWater: ["Low", "Medium"], sensitivity: 0.3 },
+  onion: { idealSoil: ["Sandy", "Loamy"], idealWater: ["Low"], sensitivity: 0.4 },
+  carrot: { idealSoil: ["Sandy", "Loamy"], idealWater: ["Medium"], sensitivity: 0.5 },
+  cabbage: { idealSoil: ["Loamy"], idealWater: ["Medium"], sensitivity: 0.5 },
+  chili: { idealSoil: ["Sandy", "Loamy"], idealWater: ["Medium"], sensitivity: 0.5 },
+  groundnut: { idealSoil: ["Sandy"], idealWater: ["Low"], sensitivity: 0.3 },
+  sunflower: { idealSoil: ["Loamy", "Clay"], idealWater: ["Low"], sensitivity: 0.3 },
+  mango: { idealSoil: ["Loamy"], idealWater: ["Low"], sensitivity: 0.4 },
+  banana: { idealSoil: ["Loamy"], idealWater: ["High"], sensitivity: 0.7 },
+  watermelon: { idealSoil: ["Sandy", "Loamy"], idealWater: ["Medium"], sensitivity: 0.5 },
+  turmeric: { idealSoil: ["Loamy"], idealWater: ["Medium"], sensitivity: 0.5 },
+  ginger: { idealSoil: ["Sandy", "Loamy"], idealWater: ["Medium"], sensitivity: 0.5 },
+  lentils: { idealSoil: ["Loamy"], idealWater: ["Low"], sensitivity: 0.3 },
+  mustard: { idealSoil: ["Loamy", "Sandy"], idealWater: ["Low"], sensitivity: 0.3 },
+  cucumber: { idealSoil: ["Loamy"], idealWater: ["Medium"], sensitivity: 0.5 },
+  eggplant: { idealSoil: ["Loamy"], idealWater: ["Medium"], sensitivity: 0.5 },
+  garlic: { idealSoil: ["Sandy", "Loamy"], idealWater: ["Low"], sensitivity: 0.4 },
 };
 
 function calculateScore(cropId: string, soil: SoilType, water: WaterLevel): number {
