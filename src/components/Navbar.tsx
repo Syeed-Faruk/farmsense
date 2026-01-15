@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Leaf, Sprout, MessageCircle, FlaskConical, Home } from "lucide-react";
+import { Menu, X, Leaf, Sprout, MessageCircle, FlaskConical, Home, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", label: "Home", icon: Home },
   { path: "/crops", label: "Explore Crops", icon: Sprout },
+  { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/chatbot", label: "Ask AI", icon: MessageCircle },
   { path: "/simulate", label: "Simulate", icon: FlaskConical },
 ];
