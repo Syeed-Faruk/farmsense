@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Send, Bot, User, Leaf, Info, Sparkles } from "lucide-react";
+import { MessageCircle, Send, Bot, User, Info, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -18,39 +19,14 @@ const suggestedQuestions = [
   "How to improve soil fertility naturally?",
 ];
 
-// Simple rule-based responses for demo (will be replaced with AI)
-function getSimpleResponse(question: string): string {
-  const q = question.toLowerCase();
-  
-  if (q.includes("loamy") && q.includes("soil")) {
-    return "Loamy soil is excellent for many crops! It has a balanced mix of sand, silt, and clay, providing good drainage while retaining nutrients. Great options include:\n\n• **Wheat** - thrives in well-drained loamy soil\n• **Maize (Corn)** - performs excellently\n• **Tomatoes** - prefer sandy loam\n• **Soybeans** - ideal for loamy conditions\n\nLoamy soil is considered the best all-purpose soil for farming due to its balanced properties.";
-  }
-  
-  if (q.includes("water") && (q.includes("reduce") || q.includes("save") || q.includes("usage"))) {
-    return "Here are effective ways to reduce water usage in farming:\n\n• **Drip Irrigation** - Delivers water directly to roots, saving 30-50% water\n• **Mulching** - Covers soil to reduce evaporation\n• **Rainwater Harvesting** - Collect and store rainwater\n• **Drought-resistant Crops** - Consider soybeans or sorghum\n• **Alternate Wetting & Drying** - For rice, this can save up to 30% water\n• **Soil Moisture Sensors** - Water only when needed\n\nThese practices not only save water but also reduce costs and support sustainable farming.";
-  }
-  
-  if (q.includes("pest") && q.includes("tomato")) {
-    return "Common pest risks for tomatoes include:\n\n• **Aphids** - Small insects that suck plant sap. Use neem oil or introduce ladybugs.\n• **Whiteflies** - Found under leaves. Yellow sticky traps help.\n• **Hornworms** - Large green caterpillars. Hand-pick or use Bacillus thuringiensis.\n• **Spider Mites** - Cause yellow spotting. Increase humidity and use insecticidal soap.\n• **Fruit Worms** - Bore into fruits. Crop rotation and removing affected fruits help.\n\n**Prevention Tips:**\n- Rotate crops annually\n- Use companion planting (basil repels pests)\n- Keep plants well-spaced for air circulation";
-  }
-  
-  if (q.includes("crop rotation") || q.includes("rotation")) {
-    return "Crop rotation is a sustainable farming practice with many benefits:\n\n**Why Rotate Crops:**\n• Breaks pest and disease cycles\n• Improves soil fertility\n• Reduces need for chemical inputs\n• Better nutrient management\n\n**Simple Rotation Plan:**\n1. **Year 1:** Legumes (soybeans, peas) - fix nitrogen\n2. **Year 2:** Leafy vegetables - use the nitrogen\n3. **Year 3:** Root vegetables - different nutrient needs\n4. **Year 4:** Grains (wheat, maize) - heavy feeders\n\nAlways follow heavy feeders with nitrogen-fixing crops!";
-  }
-  
-  if (q.includes("soil") && q.includes("fertility") || q.includes("improve soil")) {
-    return "Natural ways to improve soil fertility:\n\n• **Composting** - Add organic matter from kitchen/farm waste\n• **Green Manure** - Grow and plow under cover crops\n• **Vermicomposting** - Use earthworms to create rich compost\n• **Mulching** - Organic mulch decomposes and enriches soil\n• **Crop Rotation** - Especially with legumes that fix nitrogen\n• **Avoid Over-tilling** - Protects soil structure and organisms\n\n**Quick Boost:** Plant legumes like soybeans or clover, then incorporate them into the soil before they flower. This adds nitrogen naturally!";
-  }
-  
-  // Default response
-  return "That's a great question about agriculture! While I'm currently running in demo mode, here's some general advice:\n\n• Consider your local climate and soil conditions\n• Practice sustainable farming methods\n• Rotate crops to maintain soil health\n• Use water efficiently through drip irrigation\n• Monitor crops regularly for pests and diseases\n\n**Tip:** Check out our Crop Explorer to learn about specific crops, or use the Simulator to see how crops might perform in different conditions.\n\n*For more specific guidance, please try asking about soil types, water management, pest control, or specific crops!*";
-}
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agri-chat`;
 
 export default function ChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,9 +36,77 @@ export default function ChatbotPage() {
     scrollToBottom();
   }, [messages]);
 
+  const streamChat = async (userMessages: Message[]) => {
+    const response = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({
+        messages: userMessages.map(m => ({ role: m.role, content: m.content })),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Request failed with status ${response.status}`);
+    }
+
+    if (!response.body) {
+      throw new Error("No response body");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = "";
+    let assistantContent = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (line.startsWith(":") || line.trim() === "") continue;
+        if (!line.startsWith("data: ")) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") break;
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) {
+            assistantContent += content;
+            setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last?.role === "assistant") {
+                return prev.map((m, i) => 
+                  i === prev.length - 1 ? { ...m, content: assistantContent } : m
+                );
+              }
+              return [...prev, { id: Date.now().toString(), role: "assistant", content: assistantContent }];
+            });
+          }
+        } catch {
+          // Incomplete JSON, put it back
+          textBuffer = line + "\n" + textBuffer;
+          break;
+        }
+      }
+    }
+  };
+
   const handleSend = async (text?: string) => {
     const messageText = text || input.trim();
-    if (!messageText) return;
+    if (!messageText || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -70,21 +114,25 @@ export default function ChatbotPage() {
       content: messageText,
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI thinking
-    setTimeout(() => {
-      const response = getSimpleResponse(messageText);
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: response,
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+    try {
+      await streamChat(updatedMessages);
+    } catch (error) {
+      console.error("Chat error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to get response. Please try again.",
+      });
+      // Remove the user message if we failed
+      setMessages(messages);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -121,7 +169,7 @@ export default function ChatbotPage() {
               </div>
               <div>
                 <CardTitle className="text-lg">AgriWise Assistant</CardTitle>
-                <CardDescription>Ask anything about farming</CardDescription>
+                <CardDescription>Powered by AI</CardDescription>
               </div>
               <div className="ml-auto">
                 <span className="inline-flex items-center gap-1 text-xs bg-leaf-light text-leaf px-2 py-1 rounded-full">
@@ -204,7 +252,7 @@ export default function ChatbotPage() {
             ))}
 
             {/* Loading indicator */}
-            {isLoading && (
+            {isLoading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex gap-3 justify-start">
                 <div className="w-8 h-8 rounded-full bg-gradient-hero flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4 text-primary-foreground" />
