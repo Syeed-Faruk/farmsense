@@ -7,6 +7,11 @@ export interface Crop {
   growingSeason: string;
   sustainabilityNotes: string;
   description: string;
+  harvestTime: string;
+  optimalTemperature: string;
+  commonPests: string[];
+  nutritionalValue: string;
+  category: "Cereal" | "Vegetable" | "Fruit" | "Legume" | "Fiber" | "Spice" | "Oilseed";
 }
 
 export const crops: Crop[] = [
@@ -18,7 +23,12 @@ export const crops: Crop[] = [
     waterRequirement: "High",
     growingSeason: "Monsoon (June - November)",
     sustainabilityNotes: "Consider alternate wetting and drying techniques to reduce water usage by up to 30%.",
-    description: "A staple food crop requiring warm, humid conditions and abundant water supply."
+    description: "A staple food crop requiring warm, humid conditions and abundant water supply.",
+    harvestTime: "120-150 days",
+    optimalTemperature: "20-35°C",
+    commonPests: ["Stem borer", "Brown planthopper", "Rice blast"],
+    nutritionalValue: "Rich in carbohydrates, B vitamins, and minerals",
+    category: "Cereal"
   },
   {
     id: "wheat",
@@ -28,7 +38,12 @@ export const crops: Crop[] = [
     waterRequirement: "Medium",
     growingSeason: "Winter (November - April)",
     sustainabilityNotes: "Rotation with legumes improves soil nitrogen. Minimal tillage reduces erosion.",
-    description: "A cool-season crop that thrives in temperate climates with moderate rainfall."
+    description: "A cool-season crop that thrives in temperate climates with moderate rainfall.",
+    harvestTime: "100-130 days",
+    optimalTemperature: "15-25°C",
+    commonPests: ["Aphids", "Rust", "Powdery mildew"],
+    nutritionalValue: "High in protein, fiber, and essential nutrients",
+    category: "Cereal"
   },
   {
     id: "maize",
@@ -38,7 +53,12 @@ export const crops: Crop[] = [
     waterRequirement: "Medium",
     growingSeason: "Kharif (June - October) or Rabi",
     sustainabilityNotes: "Excellent for crop rotation. Residue can be used as mulch or fodder.",
-    description: "A versatile crop used for food, feed, and industrial purposes."
+    description: "A versatile crop used for food, feed, and industrial purposes.",
+    harvestTime: "90-120 days",
+    optimalTemperature: "21-30°C",
+    commonPests: ["Corn borer", "Fall armyworm", "Aphids"],
+    nutritionalValue: "Good source of carbohydrates, fiber, and antioxidants",
+    category: "Cereal"
   },
   {
     id: "tomato",
@@ -48,7 +68,12 @@ export const crops: Crop[] = [
     waterRequirement: "Medium",
     growingSeason: "Year-round in suitable climates",
     sustainabilityNotes: "Drip irrigation significantly reduces water waste. Good for greenhouse farming.",
-    description: "A warm-season vegetable requiring full sun and consistent moisture."
+    description: "A warm-season vegetable requiring full sun and consistent moisture.",
+    harvestTime: "60-85 days",
+    optimalTemperature: "20-27°C",
+    commonPests: ["Tomato hornworm", "Whiteflies", "Blight"],
+    nutritionalValue: "Rich in lycopene, vitamin C, and potassium",
+    category: "Vegetable"
   },
   {
     id: "potato",
@@ -58,7 +83,12 @@ export const crops: Crop[] = [
     waterRequirement: "Medium",
     growingSeason: "Cool months (October - March)",
     sustainabilityNotes: "Mulching helps retain moisture and suppress weeds naturally.",
-    description: "A cool-weather crop that stores well and provides high yields."
+    description: "A cool-weather crop that stores well and provides high yields.",
+    harvestTime: "70-120 days",
+    optimalTemperature: "15-20°C",
+    commonPests: ["Colorado potato beetle", "Late blight", "Aphids"],
+    nutritionalValue: "High in potassium, vitamin C, and fiber",
+    category: "Vegetable"
   },
   {
     id: "cotton",
@@ -68,7 +98,12 @@ export const crops: Crop[] = [
     waterRequirement: "Medium",
     growingSeason: "Kharif (April - December)",
     sustainabilityNotes: "Organic cotton farming reduces pesticide use. Companion planting helps pest control.",
-    description: "A major fiber crop requiring a long frost-free growing period."
+    description: "A major fiber crop requiring a long frost-free growing period.",
+    harvestTime: "150-180 days",
+    optimalTemperature: "21-30°C",
+    commonPests: ["Bollworm", "Whitefly", "Jassids"],
+    nutritionalValue: "N/A - Fiber crop",
+    category: "Fiber"
   },
   {
     id: "sugarcane",
@@ -78,7 +113,12 @@ export const crops: Crop[] = [
     waterRequirement: "High",
     growingSeason: "Year-round (12-18 month cycle)",
     sustainabilityNotes: "Drip irrigation can save 40% water. Bagasse can be used as biofuel.",
-    description: "A tropical grass cultivated for sugar production and bioenergy."
+    description: "A tropical grass cultivated for sugar production and bioenergy.",
+    harvestTime: "12-18 months",
+    optimalTemperature: "20-35°C",
+    commonPests: ["Sugarcane borer", "Termites", "Red rot"],
+    nutritionalValue: "High in natural sugars and energy",
+    category: "Cereal"
   },
   {
     id: "soybean",
@@ -88,11 +128,258 @@ export const crops: Crop[] = [
     waterRequirement: "Low",
     growingSeason: "Kharif (June - October)",
     sustainabilityNotes: "Fixes nitrogen in soil, reducing fertilizer needs. Excellent rotation crop.",
-    description: "A protein-rich legume that enriches soil fertility naturally."
+    description: "A protein-rich legume that enriches soil fertility naturally.",
+    harvestTime: "80-120 days",
+    optimalTemperature: "20-30°C",
+    commonPests: ["Soybean aphid", "Bean leaf beetle", "Root rot"],
+    nutritionalValue: "Excellent source of protein, omega-3, and isoflavones",
+    category: "Legume"
+  },
+  {
+    id: "onion",
+    name: "Onion",
+    icon: "🧅",
+    soilType: "Well-drained sandy loam",
+    waterRequirement: "Low",
+    growingSeason: "Rabi (October - March)",
+    sustainabilityNotes: "Intercropping with carrots helps repel pests naturally.",
+    description: "A pungent bulb vegetable used worldwide for flavoring.",
+    harvestTime: "90-150 days",
+    optimalTemperature: "13-24°C",
+    commonPests: ["Onion thrips", "Purple blotch", "Downy mildew"],
+    nutritionalValue: "Contains quercetin, sulfur compounds, and antioxidants",
+    category: "Vegetable"
+  },
+  {
+    id: "carrot",
+    name: "Carrot",
+    icon: "🥕",
+    soilType: "Deep, loose sandy loam",
+    waterRequirement: "Medium",
+    growingSeason: "Cool season (October - February)",
+    sustainabilityNotes: "Deep cultivation improves root development. Good for succession planting.",
+    description: "A root vegetable rich in beta-carotene and vitamins.",
+    harvestTime: "70-80 days",
+    optimalTemperature: "15-20°C",
+    commonPests: ["Carrot fly", "Aphids", "Leaf blight"],
+    nutritionalValue: "Excellent source of beta-carotene, fiber, and vitamin K",
+    category: "Vegetable"
+  },
+  {
+    id: "cabbage",
+    name: "Cabbage",
+    icon: "🥬",
+    soilType: "Rich, well-drained loamy soil",
+    waterRequirement: "Medium",
+    growingSeason: "Cool season (September - February)",
+    sustainabilityNotes: "Cover cropping prevents soil erosion between plantings.",
+    description: "A leafy vegetable belonging to the brassica family.",
+    harvestTime: "70-100 days",
+    optimalTemperature: "15-20°C",
+    commonPests: ["Cabbage worm", "Aphids", "Clubroot"],
+    nutritionalValue: "High in vitamin C, K, and fiber",
+    category: "Vegetable"
+  },
+  {
+    id: "chili",
+    name: "Chili Pepper",
+    icon: "🌶️",
+    soilType: "Well-drained sandy loam",
+    waterRequirement: "Medium",
+    growingSeason: "Warm season (February - June)",
+    sustainabilityNotes: "Natural pest repellent. Can be intercropped with many vegetables.",
+    description: "A spicy fruit used fresh, dried, or as powder in cuisines worldwide.",
+    harvestTime: "60-90 days",
+    optimalTemperature: "20-30°C",
+    commonPests: ["Aphids", "Thrips", "Fruit borer"],
+    nutritionalValue: "Very high in vitamin C and capsaicin",
+    category: "Spice"
+  },
+  {
+    id: "groundnut",
+    name: "Groundnut (Peanut)",
+    icon: "🥜",
+    soilType: "Light, well-drained sandy soil",
+    waterRequirement: "Low",
+    growingSeason: "Kharif (June - October)",
+    sustainabilityNotes: "Fixes nitrogen in soil. Shells can be used as mulch or compost.",
+    description: "A protein and oil-rich legume grown underground.",
+    harvestTime: "90-130 days",
+    optimalTemperature: "25-30°C",
+    commonPests: ["Leaf miner", "Aphids", "Tikka disease"],
+    nutritionalValue: "High in protein, healthy fats, and vitamin E",
+    category: "Legume"
+  },
+  {
+    id: "sunflower",
+    name: "Sunflower",
+    icon: "🌻",
+    soilType: "Well-drained loamy to clay soil",
+    waterRequirement: "Low",
+    growingSeason: "Kharif or Rabi",
+    sustainabilityNotes: "Attracts pollinators. Deep roots improve soil structure.",
+    description: "An oilseed crop also grown for seeds and ornamental purposes.",
+    harvestTime: "80-120 days",
+    optimalTemperature: "20-25°C",
+    commonPests: ["Sunflower moth", "Aphids", "Rust"],
+    nutritionalValue: "Rich in vitamin E, selenium, and healthy oils",
+    category: "Oilseed"
+  },
+  {
+    id: "mango",
+    name: "Mango",
+    icon: "🥭",
+    soilType: "Deep, well-drained alluvial soil",
+    waterRequirement: "Low",
+    growingSeason: "Summer (March - June harvest)",
+    sustainabilityNotes: "Mature trees require minimal irrigation. Fallen leaves enrich soil.",
+    description: "A tropical fruit tree known as the 'King of Fruits'.",
+    harvestTime: "3-6 years to first fruit, then annual",
+    optimalTemperature: "24-30°C",
+    commonPests: ["Mango hopper", "Fruit fly", "Anthracnose"],
+    nutritionalValue: "Excellent source of vitamin A, C, and fiber",
+    category: "Fruit"
+  },
+  {
+    id: "banana",
+    name: "Banana",
+    icon: "🍌",
+    soilType: "Rich, well-drained loamy soil",
+    waterRequirement: "High",
+    growingSeason: "Year-round in tropical climates",
+    sustainabilityNotes: "Leaves and stems can be used as mulch. Intercrop with legumes.",
+    description: "A tropical fruit crop providing year-round harvests.",
+    harvestTime: "9-12 months",
+    optimalTemperature: "25-30°C",
+    commonPests: ["Banana weevil", "Panama disease", "Sigatoka"],
+    nutritionalValue: "High in potassium, vitamin B6, and natural sugars",
+    category: "Fruit"
+  },
+  {
+    id: "watermelon",
+    name: "Watermelon",
+    icon: "🍉",
+    soilType: "Sandy loam with good drainage",
+    waterRequirement: "Medium",
+    growingSeason: "Summer (February - May)",
+    sustainabilityNotes: "Plastic mulch conserves water. Good for drip irrigation.",
+    description: "A refreshing summer fruit with high water content.",
+    harvestTime: "70-90 days",
+    optimalTemperature: "25-30°C",
+    commonPests: ["Aphids", "Fruit fly", "Fusarium wilt"],
+    nutritionalValue: "High in lycopene, vitamin C, and hydration",
+    category: "Fruit"
+  },
+  {
+    id: "turmeric",
+    name: "Turmeric",
+    icon: "🟡",
+    soilType: "Well-drained loamy or alluvial soil",
+    waterRequirement: "Medium",
+    growingSeason: "Monsoon (April - January)",
+    sustainabilityNotes: "Good shade-tolerant crop for agroforestry systems.",
+    description: "A rhizome crop used as spice and for medicinal properties.",
+    harvestTime: "7-9 months",
+    optimalTemperature: "20-30°C",
+    commonPests: ["Shoot borer", "Rhizome rot", "Leaf spot"],
+    nutritionalValue: "Contains curcumin with anti-inflammatory properties",
+    category: "Spice"
+  },
+  {
+    id: "ginger",
+    name: "Ginger",
+    icon: "🫚",
+    soilType: "Rich, well-drained sandy loam",
+    waterRequirement: "Medium",
+    growingSeason: "Monsoon (March - December)",
+    sustainabilityNotes: "Shade-tolerant. Excellent for intercropping with fruit trees.",
+    description: "An aromatic rhizome used in cooking and traditional medicine.",
+    harvestTime: "8-10 months",
+    optimalTemperature: "20-30°C",
+    commonPests: ["Shoot borer", "Rhizome rot", "Bacterial wilt"],
+    nutritionalValue: "Anti-nausea properties, contains gingerol",
+    category: "Spice"
+  },
+  {
+    id: "lentils",
+    name: "Lentils",
+    icon: "🟤",
+    soilType: "Light, well-drained loamy soil",
+    waterRequirement: "Low",
+    growingSeason: "Rabi (October - March)",
+    sustainabilityNotes: "Nitrogen-fixing legume. Improves soil health for next crop.",
+    description: "A protein-rich pulse crop important for food security.",
+    harvestTime: "90-120 days",
+    optimalTemperature: "15-25°C",
+    commonPests: ["Aphids", "Pod borer", "Wilt"],
+    nutritionalValue: "High in protein, fiber, iron, and folate",
+    category: "Legume"
+  },
+  {
+    id: "mustard",
+    name: "Mustard",
+    icon: "🌼",
+    soilType: "Loamy to sandy loam soil",
+    waterRequirement: "Low",
+    growingSeason: "Rabi (October - March)",
+    sustainabilityNotes: "Acts as biofumigant. Good rotation crop for pest control.",
+    description: "An oilseed crop also grown for leaves and seeds.",
+    harvestTime: "90-120 days",
+    optimalTemperature: "10-25°C",
+    commonPests: ["Aphids", "Painted bug", "White rust"],
+    nutritionalValue: "Rich in omega-3 fatty acids and minerals",
+    category: "Oilseed"
+  },
+  {
+    id: "cucumber",
+    name: "Cucumber",
+    icon: "🥒",
+    soilType: "Rich, well-drained loamy soil",
+    waterRequirement: "Medium",
+    growingSeason: "Warm season (February - June)",
+    sustainabilityNotes: "Vertical growing saves space. Good for trellising.",
+    description: "A refreshing vine crop used in salads and pickling.",
+    harvestTime: "50-70 days",
+    optimalTemperature: "18-30°C",
+    commonPests: ["Cucumber beetle", "Powdery mildew", "Aphids"],
+    nutritionalValue: "Low calorie, high in water content and vitamin K",
+    category: "Vegetable"
+  },
+  {
+    id: "eggplant",
+    name: "Eggplant (Brinjal)",
+    icon: "🍆",
+    soilType: "Well-drained fertile loamy soil",
+    waterRequirement: "Medium",
+    growingSeason: "Year-round in warm climates",
+    sustainabilityNotes: "Companion plant with beans for nitrogen. Mulching reduces water needs.",
+    description: "A warm-season vegetable with versatile culinary uses.",
+    harvestTime: "60-80 days",
+    optimalTemperature: "22-30°C",
+    commonPests: ["Fruit and shoot borer", "Aphids", "Mites"],
+    nutritionalValue: "Low calorie, contains nasunin antioxidant",
+    category: "Vegetable"
+  },
+  {
+    id: "garlic",
+    name: "Garlic",
+    icon: "🧄",
+    soilType: "Well-drained sandy loam",
+    waterRequirement: "Low",
+    growingSeason: "Rabi (October - March)",
+    sustainabilityNotes: "Natural pest repellent. Excellent companion plant.",
+    description: "A pungent bulb used for flavoring and medicinal purposes.",
+    harvestTime: "120-150 days",
+    optimalTemperature: "12-24°C",
+    commonPests: ["Thrips", "Purple blotch", "White rot"],
+    nutritionalValue: "Contains allicin with antimicrobial properties",
+    category: "Vegetable"
   }
 ];
 
 export const soilTypes = ["Clay", "Sandy", "Loamy"] as const;
 export const waterLevels = ["Low", "Medium", "High"] as const;
+export const categories = ["Cereal", "Vegetable", "Fruit", "Legume", "Fiber", "Spice", "Oilseed"] as const;
 export type SoilType = typeof soilTypes[number];
 export type WaterLevel = typeof waterLevels[number];
+export type CropCategory = typeof categories[number];
