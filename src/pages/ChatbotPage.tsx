@@ -21,6 +21,26 @@ const suggestedQuestions = [
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agri-chat`;
 
+// Escape HTML to prevent XSS attacks before applying markdown transformations
+const escapeHtml = (text: string): string => {
+  const htmlEscapeMap: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return text.replace(/[&<>"']/g, (char) => htmlEscapeMap[char]);
+};
+
+// Format message content with safe markdown rendering
+const formatMessageContent = (content: string): string => {
+  return escapeHtml(content)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br/>');
+};
+
 export default function ChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -236,10 +256,7 @@ export default function ChatbotPage() {
                   <div 
                     className="text-sm whitespace-pre-wrap prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ 
-                      __html: message.content
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                        .replace(/\n/g, '<br/>') 
+                      __html: formatMessageContent(message.content)
                     }}
                   />
                 </div>
