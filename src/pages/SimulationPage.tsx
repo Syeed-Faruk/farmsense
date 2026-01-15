@@ -1,11 +1,25 @@
-import { useState } from "react";
-import { FlaskConical, Droplets, Mountain, RefreshCw, ChevronRight, AlertTriangle, CheckCircle2, AlertCircle, Leaf, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FlaskConical, Droplets, Mountain, RefreshCw, ChevronRight, AlertTriangle, CheckCircle2, AlertCircle, Leaf, Info, Cloud, Thermometer, Wind, MapPin, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { crops, soilTypes, waterLevels, SoilType, WaterLevel } from "@/data/crops";
 import { simulateCropOutcome, SimulationResult, StageResult } from "@/lib/simulation";
+import { useToast } from "@/hooks/use-toast";
+
+interface WeatherData {
+  temperature: number;
+  humidity: number;
+  precipitation: number;
+  windSpeed: number;
+  weatherCode: number;
+  condition: string;
+  location: string;
+  recommendations: string[];
+}
+
+const WEATHER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-weather`;
 
 function StageCard({ stage, index }: { stage: StageResult; index: number }) {
   const conditionColors = {
@@ -88,6 +102,116 @@ function StageCard({ stage, index }: { stage: StageResult; index: number }) {
   );
 }
 
+function WeatherCard({ weather, isLoading, onRefresh }: { 
+  weather: WeatherData | null; 
+  isLoading: boolean;
+  onRefresh: () => void;
+}) {
+  if (isLoading) {
+    return (
+      <Card className="border-water/30 bg-water-light/20">
+        <CardContent className="py-8 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-water" />
+          <span className="ml-3 text-muted-foreground">Fetching weather data...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!weather) {
+    return (
+      <Card className="border-muted">
+        <CardContent className="py-6 text-center">
+          <Cloud className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+          <p className="text-muted-foreground mb-3">Enable location to get weather-based recommendations</p>
+          <Button onClick={onRefresh} variant="outline" size="sm">
+            <MapPin className="w-4 h-4 mr-2" />
+            Get My Location
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const getWeatherIcon = (code: number) => {
+    if (code === 0) return "☀️";
+    if (code <= 3) return "⛅";
+    if (code <= 49) return "🌫️";
+    if (code <= 69) return "🌧️";
+    if (code <= 79) return "🌨️";
+    if (code <= 86) return "🌧️";
+    if (code >= 95) return "⛈️";
+    return "🌤️";
+  };
+
+  return (
+    <Card className="border-water/30 bg-gradient-to-br from-water-light/30 to-card">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Cloud className="w-5 h-5 text-water" />
+            Current Weather
+          </CardTitle>
+          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-8 w-8">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
+        <CardDescription className="flex items-center gap-1">
+          <MapPin className="w-3 h-3" />
+          {weather.location}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Weather Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="text-center p-3 bg-card rounded-lg border">
+            <span className="text-3xl">{getWeatherIcon(weather.weatherCode)}</span>
+            <p className="text-xs text-muted-foreground mt-1">{weather.condition}</p>
+          </div>
+          <div className="text-center p-3 bg-card rounded-lg border">
+            <div className="flex items-center justify-center gap-1">
+              <Thermometer className="w-4 h-4 text-destructive" />
+              <span className="text-2xl font-bold">{weather.temperature}°C</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Temperature</p>
+          </div>
+          <div className="text-center p-3 bg-card rounded-lg border">
+            <div className="flex items-center justify-center gap-1">
+              <Droplets className="w-4 h-4 text-water" />
+              <span className="text-2xl font-bold">{weather.humidity}%</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Humidity</p>
+          </div>
+          <div className="text-center p-3 bg-card rounded-lg border">
+            <div className="flex items-center justify-center gap-1">
+              <Wind className="w-4 h-4 text-muted-foreground" />
+              <span className="text-2xl font-bold">{weather.windSpeed}</span>
+              <span className="text-sm">km/h</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Wind</p>
+          </div>
+        </div>
+
+        {/* Recommendations */}
+        <div className="space-y-2">
+          <p className="text-sm font-semibold flex items-center gap-2">
+            <Leaf className="w-4 h-4 text-leaf" />
+            Weather-Based Recommendations
+          </p>
+          <ul className="space-y-2">
+            {weather.recommendations.map((rec, i) => (
+              <li key={i} className="text-sm text-muted-foreground flex items-start gap-2 p-2 bg-muted/30 rounded-lg">
+                <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
+                {rec}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SimulationPage() {
   const [selectedCrop, setSelectedCrop] = useState<string>("");
   const [selectedSoil, setSelectedSoil] = useState<SoilType | "">("");
@@ -95,11 +219,86 @@ export default function SimulationPage() {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
+  // Weather state
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const { toast } = useToast();
+
   // What-if comparison state
   const [compareMode, setCompareMode] = useState(false);
   const [compareSoil, setCompareSoil] = useState<SoilType | "">("");
   const [compareWater, setCompareWater] = useState<WaterLevel | "">("");
   const [compareResult, setCompareResult] = useState<SimulationResult | null>(null);
+
+  const fetchWeather = async () => {
+    setIsLoadingWeather(true);
+    
+    try {
+      // Get user's location
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 300000, // Cache for 5 minutes
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+
+      // Get location name using reverse geocoding (optional)
+      let locationName = "";
+      try {
+        const geoResponse = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+        );
+        const geoData = await geoResponse.json();
+        locationName = geoData.address?.city || geoData.address?.town || geoData.address?.village || "";
+      } catch {
+        // Ignore geocoding errors
+      }
+
+      // Fetch weather data
+      const response = await fetch(WEATHER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ latitude, longitude, locationName }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch weather");
+      }
+
+      const data = await response.json();
+      setWeather(data);
+    } catch (error) {
+      console.error("Weather fetch error:", error);
+      if (error instanceof GeolocationPositionError) {
+        toast({
+          variant: "destructive",
+          title: "Location access denied",
+          description: "Please enable location access to get weather recommendations.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Weather unavailable",
+          description: "Could not fetch weather data. Please try again.",
+        });
+      }
+    } finally {
+      setIsLoadingWeather(false);
+    }
+  };
+
+  // Fetch weather on mount
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      fetchWeather();
+    }
+  }, []);
 
   const handleSimulate = () => {
     if (!selectedCrop || !selectedSoil || !selectedWater) return;
@@ -146,7 +345,7 @@ export default function SimulationPage() {
     <div className="min-h-screen bg-gradient-earth py-8 lg:py-12">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="text-center max-w-3xl mx-auto mb-8">
           <div className="inline-flex items-center gap-2 bg-accent/30 text-secondary px-4 py-2 rounded-full mb-4">
             <FlaskConical className="w-4 h-4" />
             <span className="text-sm font-semibold">Crop Outcome Simulator</span>
@@ -158,6 +357,15 @@ export default function SimulationPage() {
             See how different crops may perform under various soil and water conditions. 
             This is an advisory tool to help inform your decisions.
           </p>
+        </div>
+
+        {/* Weather Card */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <WeatherCard 
+            weather={weather} 
+            isLoading={isLoadingWeather} 
+            onRefresh={fetchWeather} 
+          />
         </div>
 
         {/* Input Form */}
