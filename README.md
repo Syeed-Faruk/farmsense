@@ -2,7 +2,7 @@
 
 ## Project info
 
-**Project Name:** FarmSense – AI-Powered Agricultural Decision Support Platform
+**Project Name:** FarmSense – AI-Powered Agricultural Decision Support Platform \n
 **Website URL:** https://agriwise.lovable.app
 
 ## How can I edit this code?
